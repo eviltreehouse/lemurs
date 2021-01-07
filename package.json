@@ -1,0 +1,15 @@
+{
+  "name": "lemurs",
+  "version": "0.6.0",
+  "description": "They are like pandas, but thinner",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "keywords": [],
+  "author": "Corey Sharrah <corey@eviltreehouse.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "mocha": "^8.2.1"
+  }
+}
