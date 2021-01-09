@@ -332,10 +332,36 @@ class LemursDataSet {
 		return this.dupe().filter(filterOp);
 	}
 
+	/**
+	 * Trims the number of rows _in place_ in the data set to a finite size. If the desired
+	 * size exceeds the row count, nothing is changed.
+	 * @param {number} desiredSize 
+	 * @return {this}
+	 */
+	trunc(desiredSize) {
+		this.rows = this.rows.slice(0, Number(desiredSize));
+		return this;
+	}
+
+	/**
+	 * Returns a sub-selection of the current data set into a new `LemursDataSet` object.
+	 * @param {number} desiredSize 
+	 * @return {LemursDataSet}
+	 */
+	trunced(desiredSize) {
+		return this.dupe([0, Number(desiredSize)]);
+	}
+
+	/**
+	 * @return {number}
+	 */
 	rowCount() {
 		return this.rows.length;
 	}
 
+	/**
+	 * @return {this}
+	 */
 	clearRows() {
 		this.rows.length = 0;
 		return this;

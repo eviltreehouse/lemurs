@@ -128,4 +128,22 @@ describe("Data Refinement", () => {
 			assert(females.get('Gender').some(v => v === 'Male') === false);
 		});
 	});
+
+	context('Truncation', () => {
+		it('Truncates to the desired size', () => {
+			const desiredSize = 100;
+
+			df.trunc(desiredSize);
+			assert(df.rowCount() === desiredSize);
+		});
+
+		it('Returns distinct desired rows', () => {
+			const desiredSize = 100;
+			const origCount = df.rowCount();
+
+			const newDf = df.trunced(desiredSize);
+			assert(df.rowCount() === origCount);
+			assert(newDf.rowCount() === desiredSize);
+		});		
+	});
 });
