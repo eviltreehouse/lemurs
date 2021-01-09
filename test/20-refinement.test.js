@@ -66,7 +66,66 @@ describe("Data Refinement", () => {
 		for (const v of df.get('Tenure')) assert(typeof v === 'number');
 	});
 
-	xit('Sorting', () => {
-		
+	context('Sorting', () => {
+		const data = [
+			[ 'Alice', 41, 5 ],
+			[ 'Bob',  58, 4 ],
+			[ 'Casey', 29, 5 ],
+			[ 'Devon', 30, 6 ],
+			[ 'Eric', 30, 7 ],
+			[ 'Fiona', 23, 7 ],
+		];
+
+		let df;
+
+		beforeEach(() => {
+			df = new LemursDataSet(data, ['Name', 'Age', 'Band'], 'Name');
+		});
+
+		afterEach(() => {
+			df = null;
+		});
+
+		it('Sorts ascending', () => {
+			df.sort('Age');
+			assert.deepStrictEqual(df.get('Name'), ['Fiona', 'Casey', 'Devon', 'Eric', 'Alice', 'Bob']);
+		});
+
+		it('Sorts descending', () => {
+			df.sort('Age', true);
+			assert.deepStrictEqual(df.get('Name'), ['Fiona', 'Casey', 'Eric', 'Devon', 'Alice', 'Bob'].reverse());
+		});
+
+		it('Multi-column sort', () => {
+			df.sort(['Band', 'Age']);
+			assert.deepStrictEqual(df.get('Name'), ['Bob', 'Casey', 'Alice', 'Devon', 'Fiona', 'Eric']);
+		});
+
+		it('Multi-column complex sort', () => {
+			df.sort(['Band', ['Age', true]]);
+			assert.deepStrictEqual(df.get('Name'), ['Bob', 'Alice', 'Casey', 'Devon', 'Eric', 'Fiona']);
+		});		
+	});
+
+	context('Filtering', () => {
+		it('Filter in-place', () => {
+			const origCount = df.rowCount();
+			df.filter(r => r.Gender === 'Male');
+			const newCount = df.rowCount();
+
+			assert(newCount < origCount);
+			assert(df.get('Gender').some(v => v === 'Female') === false);
+		});
+
+		it('Returns distinct filtered set', () => {
+			const origCount = df.rowCount();
+			const females = df.filtered(r => r.Gender === 'Female');
+			const newCount = df.rowCount();
+
+			assert(newCount === origCount);
+			assert(df.get('Gender').some(v => v === 'Female') === true);
+			assert(df.get('Gender').some(v => v === 'Male') === true);
+			assert(females.get('Gender').some(v => v === 'Male') === false);
+		});
 	});
 });

@@ -1,8 +1,36 @@
 'use strict';
 
-const colSort = colidx => function(a, b) {
-	if (a[colidx] === b[colidx]) return 0;
-	return (a[colidx] > b[colidx]) ? 1 : -1;
+const colSort = (_colidxs, _sortDir) => function(a, b) {
+	const colidxs = [..._colidxs];
+	const sortDir = [..._sortDir];
+
+	let result = 0;
+
+	while (true) {
+		if (colidxs.length === 0) break;
+	
+		const colidx = colidxs.shift();
+		const coeff = sortDir.shift();
+
+		if (a[colidx] === b[colidx]) continue;
+		else {
+			result = (a[colidx] > b[colidx]) ? (1 * coeff) : (-1 * coeff);
+			break;
+		}
+	}
+
+	return result;
+};
+
+/**
+ * @param {any[]} arr 
+ * @param {string[]} cols 
+ * @return {Object.<string,any>}
+ */
+const rowToObject = (arr, cols) => {
+	const o = {};
+	for (let ci in cols) o[cols[ci]] = arr[ci];
+	return o;
 };
 
 class LemursDataSet {
@@ -28,13 +56,33 @@ class LemursDataSet {
 
 	/**
 	 * Sort in-place
-	 * @param {string} col
+	 * @param {string|string[]|[string, boolean?]} cols
+	 * @param {boolean} [descending]
 	 * @return {this}
 	 */
-	sort(col) {
-		if (this.colidx[col] === undefined) throw new Error('No such column: ' + col);
+	sort(cols, descending) {
+		const sortCols = [];
+		const sortDirs = [];
 
-		this.rows.sort(colSort(this.colidx[col]));
+		if (typeof cols === 'string') {
+			sortCols.push(cols);
+			sortDirs.push(descending === true ? -1 : 1);
+		} else if (Array.isArray(cols)) {
+			for (let sortOp of cols) {
+				if (typeof sortOp === 'string') {
+					sortCols.push(sortOp);
+					sortDirs.push(1);
+				} else if (Array.isArray(sortOp)) {
+					sortCols.push(sortOp[0]);
+					sortDirs.push(sortOp[1] === true ? -1 : 1);
+				}
+			}
+		}
+
+		if (sortCols.some(col => this.colidx[col] === undefined)) throw new Error('No such column: ' + col);
+
+		this.rows.sort(colSort(sortCols.map(col => this.colidx[col]), sortDirs));
+
 		return this;
 	}
 
@@ -254,6 +302,34 @@ class LemursDataSet {
 		this.rows = this.rows.filter((v, i) => !purge.includes(i));
 
 		return purge.length;
+	}
+
+	/**
+	 * Filter _in-place_ the rows of the data set based on the operation provided.
+	 * Each row coming in will be represented as an `Object.<string,any>` of column
+	 * value pairs.
+	 * @param {function(Object.<string,any>): boolean} filterOp
+	 * @return {this}
+	 */
+	filter(filterOp) {
+		this.rows = this.rows.filter((row) => {
+			const ro = rowToObject(row, this.cols);
+			return filterOp(ro);
+		});
+
+		return this;
+	}
+
+	/**
+	 * Filter the rows of the data set based on the operation provided and returns
+	 * a new `LemursDataSet` with the matching rows, leaving the original intact.
+	 * Each row coming in will be represented as an `Object.<string,any>` of column
+	 * value pairs.
+	 * @param {function(Object.<string,any>): boolean} filterOp
+	 * @return {LemursDataSet}
+	 */
+	filtered(filterOp) {
+		return this.dupe().filter(filterOp);
 	}
 
 	rowCount() {
