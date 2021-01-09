@@ -1,5 +1,14 @@
 'use strict';
 
+/**
+ * Rational float number builder
+ * @param {number} precision 
+ * @return {function(any): number}
+ */
+const rationalFloat = (precision) => function(v) {
+	return parseFloat(Number(v).toFixed(precision));
+};
+
 const colSort = (_colidxs, _sortDir) => function(a, b) {
 	const colidxs = [..._colidxs];
 	const sortDir = [..._sortDir];
@@ -8,7 +17,7 @@ const colSort = (_colidxs, _sortDir) => function(a, b) {
 
 	while (true) {
 		if (colidxs.length === 0) break;
-	
+
 		const colidx = colidxs.shift();
 		const coeff = sortDir.shift();
 
@@ -23,8 +32,8 @@ const colSort = (_colidxs, _sortDir) => function(a, b) {
 };
 
 /**
- * @param {any[]} arr 
- * @param {string[]} cols 
+ * @param {any[]} arr
+ * @param {string[]} cols
  * @return {Object.<string,any>}
  */
 const rowToObject = (arr, cols) => {
@@ -116,15 +125,19 @@ class LemursDataSet {
 	/**
 	 * Pluck a single row from the data frame, assuming a `primaryColumn` is set.
 	 * If the column isn't actually unique, it will return the 1st matching row.
+	 * It will be a "copy" of the row, so any manipulation will be lost.
 	 * @param {any} id
+	 * @param {boolean} [asObject]
 	 */
-	inspect(id) {
+	inspect(id, asObject) {
 		if (! this.primaryColumn) throw new Error('Cannot inspect(): No primary column set!');
 		const idx = this.colidx[this.primaryColumn];
 
 		const r = this.rows.find(_ => _[idx] === id);
-		if (r) return [...r]; // clone it
-		else return null;
+		if (r) {
+			if (asObject === true) return rowToObject(r, this.cols);
+			else return [...r]; // clone it at least
+		} else return null;
 	}
 
 	/**
@@ -217,6 +230,51 @@ class LemursDataSet {
 	}
 
 	/**
+	 * @param {string} col 
+	 * @param {number} period 
+	 */
+	ema(col, period) {
+		const weight = 2 / (period + 1);
+		const op = this.columnOp(col, (_, v) => {
+			if (_.lastEma === null) {
+				_.lastEma = v;
+				_.ema.push(v);
+				return _;
+			}
+
+			const newEma = (v - _.lastEma) * weight + _.lastEma;
+			_.ema.push(newEma);
+			_.lastEma = newEma;
+			return _;
+		}, { lastEma: null, ema: [] });
+
+		return op.ema;
+	}	
+
+	/**
+	 * @param {string} col 
+	 * @param {number} period 
+	 */
+	sma(col, period) {
+		const op = this.columnOp(col, (_, v) => {
+			_.vals.push(v);
+			if (_.vals.length < period) {
+				_.sma.push(null);
+
+				return _;
+			} else {
+				const sum = _.vals.reduce((_sum, v) => _sum + v, 0);
+				_.vals.shift();
+				_.sma.push(sum / period);
+
+				return _;
+			}
+		}, { vals: [], sma: [] });
+
+		return op.sma;
+	}
+
+	/**
 	 * @param {string} col
 	 * @return {number}
 	 */
@@ -249,6 +307,55 @@ class LemursDataSet {
 		}
 
 		return sums;
+	}
+
+	/**
+	 * @param {string[]} cols
+	 * @param {string} [targetCol]
+	 * @return {number[]}
+	 */
+	diffOf(cols, targetCol) {
+		const diffs = this.multiColumnOp(cols, (_idxs, acc, r) => {
+			const idxs = [..._idxs];
+
+			let v = Number(r[idxs.shift()]);
+			for (let col of idxs) {
+				v -= Number(r[col])
+			}
+
+			acc.push(v);
+			return acc;
+		});
+
+		if (typeof targetCol === 'string') {
+			// zip the data into the new column
+			this.appendColumn(targetCol, diffs);
+		}
+
+		return diffs;
+	}	
+
+	/**
+	 * @param {string} col
+	 * @return {number}
+	 */
+	mean(col) {
+		return this.sum(col) / this.rowCount();
+	}
+
+	/**
+	 * @param {string} col
+	 * @return {number}
+	 */
+	median(col) {
+		const v = this.get(col).sort();
+
+		if (v.length % 2 === 0) {
+			const i = Math.floor((v.length - 1) / 2);
+			return (v[i] + v[i+1]) / 2;
+		} else {
+			return v[Math.ceil(v.length / 2)];
+		}
 	}
 
 	/**
@@ -335,7 +442,7 @@ class LemursDataSet {
 	/**
 	 * Trims the number of rows _in place_ in the data set to a finite size. If the desired
 	 * size exceeds the row count, nothing is changed.
-	 * @param {number} desiredSize 
+	 * @param {number} desiredSize
 	 * @return {this}
 	 */
 	trunc(desiredSize) {
@@ -345,7 +452,7 @@ class LemursDataSet {
 
 	/**
 	 * Returns a sub-selection of the current data set into a new `LemursDataSet` object.
-	 * @param {number} desiredSize 
+	 * @param {number} desiredSize
 	 * @return {LemursDataSet}
 	 */
 	trunced(desiredSize) {
