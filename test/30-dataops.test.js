@@ -63,7 +63,7 @@ describe('Data Operations', () => {
 		assert(iterations.length === 15);
 		assert.deepStrictEqual(iterations, df.get('Iterations'));
 
-		const row = df.inspect('0001', true);
+		const row = df.fetch('0001', true);
 		assert(row.Iterations === (row.Successes + row.Failures));
 	});
 
@@ -72,7 +72,7 @@ describe('Data Operations', () => {
 		assert(posits.length === 15);
 		assert.deepStrictEqual(posits, df.get('Positivity'));
 
-		const row = df.inspect('0001', true);
+		const row = df.fetch('0001', true);
 		assert(row.Positivity === (row.Successes - row.Failures));
 	});
 

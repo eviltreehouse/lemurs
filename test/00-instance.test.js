@@ -23,7 +23,7 @@ describe('Lemurs Instances', () => {
 
 		assert.deepStrictEqual(df.get('Name'), ['Alice', 'Bob', 'Clara', 'Devon']);
 		assert.deepStrictEqual(df.get('Age'), ['32', '46', '47', '29']);
-		assert.deepStrictEqual(df.inspect('Alice') , ['Alice', '32', 'IT']);
+		assert.deepStrictEqual(df.fetch('Alice') , ['Alice', '32', 'IT']);
 		
 		assert.deepStrictEqual(df.get('Name', 1) , ['Bob']);
 		assert.deepStrictEqual(df.get(['Name', 'Department'], [1, 3]), 

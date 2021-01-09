@@ -1,13 +1,22 @@
 'use strict';
 
-/**
- * Rational float number builder
- * @param {number} precision 
- * @return {function(any): number}
- */
-const rationalFloat = (precision) => function(v) {
-	return parseFloat(Number(v).toFixed(precision));
-};
+const Mutators = Object.freeze({
+	/**
+	 * 
+	 * @param {Object.<string,any>} classifierMap 
+	 * @param {any} [defaultValue] 
+	 */
+	Classifier: (classifierMap, defaultValue) => function (v) {
+		const k = String(v);
+		if (classifierMap[k] == undefined) return defaultValue;
+		else return classifierMap[k];
+	},
+	RationalFloatMutator: (precision) => function(v) {
+		return parseFloat(Number(v).toFixed(precision));
+	},
+	TruthyBool: (v) => Boolean(String(v).match(/[yY1Tt]/)),
+});
+
 
 const colSort = (_colidxs, _sortDir) => function(a, b) {
 	const colidxs = [..._colidxs];
@@ -96,15 +105,27 @@ class LemursDataSet {
 	}
 
 	/**
+	 * Return the sorted data as a distinct `LemursDataSet` instance.
+	 * @param {string|string[]|[string, boolean?]} cols 
+	 * @param {boolean} [descending] 
+	 * @return {LemursDataSet}
+	 */
+	sorted(cols, descending) {
+		return this.dupe().sort(cols, descending);
+	}
+
+	/**
 	 * @param {[start: number, count: number]} range
 	 * @return {LemursDataSet}
 	 */
 	dupe(range) {
+		const pClass = this.constructor;
+
 		if (!Array.isArray(range)) range = [];
-		return new LemursDataSet(
+		return new pClass(
 			this.rows.slice(...range).map(r => [...r]),
 			[...this.cols],
-			this.primaryColumn
+			this.primaryColumn,
 		);
 	}
 
@@ -129,8 +150,8 @@ class LemursDataSet {
 	 * @param {any} id
 	 * @param {boolean} [asObject]
 	 */
-	inspect(id, asObject) {
-		if (! this.primaryColumn) throw new Error('Cannot inspect(): No primary column set!');
+	fetch(id, asObject) {
+		if (! this.primaryColumn) throw new Error('Cannot fetch(): No primary column set!');
 		const idx = this.colidx[this.primaryColumn];
 
 		const r = this.rows.find(_ => _[idx] === id);
@@ -559,7 +580,7 @@ class LemursDataSet {
 		let rawRows = blobParse(csvRaw, ',');
 		let rawCols = Array.isArray(manualColumns) ? manualColumns : (rawRows.length ? rawRows.shift() : []);
 
-		return new LemursDataSet(rawRows.filter(r => r !== null), rawCols, primaryColumn);
+		return new this(rawRows.filter(r => r !== null), rawCols, primaryColumn);
 	}
 
 	/**
@@ -574,7 +595,7 @@ class LemursDataSet {
 		let rawRows = blobParse(tsvRaw, '\t');
 		let rawCols = Array.isArray(manualColumns) ? manualColumns : (rawRows.length ? rawRows.shift() : []);
 
-		return new LemursDataSet(rawRows.filter(r => r !== null), rawCols, primaryColumn);
+		return new this(rawRows.filter(r => r !== null), rawCols, primaryColumn);
 	}
 }
 
@@ -637,4 +658,5 @@ function blobParse(raw, delimiter) {
 		.map(rowParse.bind(this, delimiter));
 }
 
+LemursDataSet.Mutators = Mutators;
 module.exports = LemursDataSet;

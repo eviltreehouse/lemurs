@@ -14,7 +14,7 @@ describe('Data loading', () => {
 		assert(df && typeof df === 'object');
 		assert(df.cols.length === 3);
 		assert(df.rowCount() === 4);
-		assert.deepStrictEqual(df.inspect('Alice'), ['Alice', '32', 'IT']);
+		assert.deepStrictEqual(df.fetch('Alice'), ['Alice', '32', 'IT']);
 	});
 
 	it('Manual Headers OK', () => {
@@ -22,7 +22,7 @@ describe('Data loading', () => {
 		assert(df && typeof df === 'object');
 		assert(df.cols.length === 3);
 		assert(df.rowCount() === 4);
-		assert.deepStrictEqual(df.inspect('Alice'), ['Alice', '32', 'IT']);
+		assert.deepStrictEqual(df.fetch('Alice'), ['Alice', '32', 'IT']);
 		assert.deepStrictEqual(df.get('Department'), ['IT', 'Finance', 'Executive', 'Sales']);
 	});
 
@@ -31,7 +31,7 @@ describe('Data loading', () => {
 		assert(df && typeof df === 'object');
 		assert(df.cols.length === 3);
 		assert(df.rowCount() === 4);
-		assert.deepStrictEqual(df.inspect('Alice'), ['Alice', '32', 'IT']);
+		assert.deepStrictEqual(df.fetch('Alice'), ['Alice', '32', 'IT']);
 		assert.deepStrictEqual(df.get('Department'), ['IT', 'Finance', 'Executive', 'Sales']);
 	});
 })

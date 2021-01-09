@@ -38,7 +38,7 @@ describe("Data Refinement", () => {
 
 		for (const i of [261,268,254,234,299]) {
 			df.rows[i][df.colidx['CustomerID']] = null;
-		}		
+		}
 
 
 		const removals = df.audit(audit);
@@ -91,6 +91,14 @@ describe("Data Refinement", () => {
 			assert.deepStrictEqual(df.get('Name'), ['Fiona', 'Casey', 'Devon', 'Eric', 'Alice', 'Bob']);
 		});
 
+		it('Return Sorted', () => {
+			const originalNameOrder = df.get('Name');
+			const newDf = df.sorted('Age');
+
+			assert.deepStrictEqual(df.get('Name'), originalNameOrder);
+			assert.deepStrictEqual(newDf.get('Name'), ['Fiona', 'Casey', 'Devon', 'Eric', 'Alice', 'Bob']);
+		});
+
 		it('Sorts descending', () => {
 			df.sort('Age', true);
 			assert.deepStrictEqual(df.get('Name'), ['Fiona', 'Casey', 'Eric', 'Devon', 'Alice', 'Bob'].reverse());
@@ -104,7 +112,7 @@ describe("Data Refinement", () => {
 		it('Multi-column complex sort', () => {
 			df.sort(['Band', ['Age', true]]);
 			assert.deepStrictEqual(df.get('Name'), ['Bob', 'Alice', 'Casey', 'Devon', 'Eric', 'Fiona']);
-		});		
+		});
 	});
 
 	context('Filtering', () => {
@@ -144,6 +152,6 @@ describe("Data Refinement", () => {
 			const newDf = df.trunced(desiredSize);
 			assert(df.rowCount() === origCount);
 			assert(newDf.rowCount() === desiredSize);
-		});		
+		});
 	});
 });
