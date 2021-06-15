@@ -380,6 +380,23 @@ class LemursDataSet {
 	}
 
 	/**
+	 * Returns the items that exist in both sets. Set `invert` to `true` to invert
+	 * the logic, e.g. return the rows that are _absent_ in the 2nd set.
+	 * @param {LemursDataSet} otherSet 
+	 * @param {boolean} [invert]
+	 * @return {LemursDataSet}
+	 */
+	intersection(otherSet, invert) {
+		const key = this.primaryColumn;
+		invert = invert === true
+		
+		return this.filtered(r => {
+			const hasRow = Boolean(otherSet.fetch(r[key]))
+			return invert ? !hasRow : hasRow;
+		});
+	}
+
+	/**
 	 * Performs an audit pass on the records. By default is will remove any row that has too many or
 	 * too few columns of data, but you may optionally provide column names to different secondary
 	 * audit filters (see quickdocs for `opts` parameters.) Will return the number of rows that
